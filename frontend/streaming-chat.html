@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>流式聊天 - IntelliKnow KMS</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .metric-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #007bff;
+        }
+
+        .metric-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .metric-unit {
+            font-size: 14px;
+            color: #666;
+            margin-left: 5px;
+        }
+
+        .chat-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .chat-messages {
+            height: 500px;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .message.assistant {
+            display: flex;
+            justify-content: flex-start;
+        }
+
+        .message-bubble {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            line-height: 1.5;
+        }
+
+        .message.user .message-bubble {
+            background: #007bff;
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.assistant .message-bubble {
+            background: #f1f3f4;
+            color: #333;
+            border-bottom-left-radius: 4px;
+        }
+
+        .message-input-container {
+            padding: 20px;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 10px;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid #e0e0e0;
+            border-radius: 24px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .message-input:focus {
+            border-color: #007bff;
+        }
+
+        .send-button {
+            padding: 12px 32px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 24px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .send-button:hover {
+            background: #0056b3;
+        }
+
+        .send-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-indicator.idle {
+            background: #28a745;
+        }
+
+        .status-indicator.processing {
+            background: #ffc107;
+            animation: pulse 1s infinite;
+        }
+
+        .status-indicator.error {
+            background: #dc3545;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 12px 16px;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: #999;
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-10px); }
+        }
+
+        .documents-preview {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .documents-preview h4 {
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .document-item {
+            padding: 5px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .document-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>
+                <span class="status-indicator idle" id="statusIndicator"></span>
+                流式聊天 - IntelliKnow KMS
+            </h1>
+            <p style="color: #666; margin-top: 10px;">
+                使用流式 API 获得更快的响应时间 (TTFT) 和更好的用户体验
+            </p>
+
+            <div class="metrics" id="metricsPanel" style="display: none;">
+                <div class="metric-card">
+                    <div class="metric-label">TTFT (首个 Token)</div>
+                    <div class="metric-value" id="ttft">0<span class="metric-unit">ms</span></div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Intent 分类</div>
+                    <div class="metric-value" id="intentTime">0<span class="metric-unit">ms</span></div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">向量检索</div>
+                    <div class="metric-value" id="retrievalTime">0<span class="metric-unit">ms</span></div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">生成速度</div>
+                    <div class="metric-value" id="tokensPerSecond">0<span class="metric-unit">tokens/s</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chat-container">
+            <div class="chat-messages" id="chatMessages">
+                <div class="message assistant">
+                    <div class="message-bubble">
+                        你好！我是智能知识库助手。请问有什么可以帮助你的？
+                    </div>
+                </div>
+            </div>
+
+            <div class="message-input-container">
+                <input
+                    type="text"
+                    class="message-input"
+                    id="messageInput"
+                    placeholder="输入你的问题..."
+                    onkeypress="handleKeyPress(event)"
+                >
+                <button class="send-button" id="sendButton" onclick="sendMessage()">
+                    发送
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isProcessing = false;
+
+        function setStatus(status) {
+            const indicator = document.getElementById('statusIndicator');
+            indicator.className = 'status-indicator ' + status;
+        }
+
+        function updateMetrics(metrics) {
+            document.getElementById('metricsPanel').style.display = 'grid';
+            document.getElementById('ttft').innerHTML = metrics.ttft + '<span class="metric-unit">ms</span>';
+            document.getElementById('intentTime').innerHTML = metrics.intentTime + '<span class="metric-unit">ms</span>';
+            document.getElementById('retrievalTime').innerHTML = metrics.retrievalTime + '<span class="metric-unit">ms</span>';
+            document.getElementById('tokensPerSecond').innerHTML = metrics.tokensPerSecond + '<span class="metric-unit">tokens/s</span>';
+        }
+
+        function addMessage(content, isUser = false, documents = null) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message ' + (isUser ? 'user' : 'assistant');
+
+            let html = `<div class="message-bubble">${content}</div>`;
+
+            if (documents && documents.length > 0) {
+                html += `
+                    <div class="documents-preview">
+                        <h4>📚 参考文档 (${documents.length})</h4>
+                        ${documents.map((doc, i) => `
+                            <div class="document-item">
+                                <strong>[${i + 1}]</strong> ${doc.content}...
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            messageDiv.innerHTML = html;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function addTypingIndicator() {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message assistant';
+            messageDiv.id = 'typingIndicator';
+            messageDiv.innerHTML = `
+                <div class="message-bubble">
+                    <div class="typing-indicator">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
+            `;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function removeTypingIndicator() {
+            const indicator = document.getElementById('typingIndicator');
+            if (indicator) {
+                indicator.remove();
+            }
+        }
+
+        function updateLastMessage(appendContent) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messages = chatMessages.querySelectorAll('.message.assistant');
+            const lastMessage = messages[messages.length - 1];
+
+            if (lastMessage) {
+                const bubble = lastMessage.querySelector('.message-bubble');
+                bubble.innerHTML += appendContent;
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+        }
+
+        async function sendMessage() {
+            if (isProcessing) return;
+
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            // Clear input
+            input.value = '';
+            isProcessing = true;
+            setStatus('processing');
+
+            // Disable button
+            document.getElementById('sendButton').disabled = true;
+
+            // Add user message
+            addMessage(message, true);
+
+            // Add typing indicator
+            addTypingIndicator();
+
+            // Start streaming
+            const startTime = Date.now();
+            let metrics = {
+                ttft: 0,
+                intentTime: 0,
+                retrievalTime: 0,
+                tokensPerSecond: 0
+            };
+            let responseStarted = false;
+            let fullResponse = '';
+
+            try {
+                const response = await fetch('/api/queries/process-stream', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        query_text: message,
+                        platform: 'web'
+                    })
+                });
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    const lines = decoder.decode(value).split('\n');
+
+                    for (const line of lines) {
+                        if (!line.trim()) continue;
+
+                        const event = JSON.parse(line);
+
+                        switch (event.type) {
+                            case 'start':
+                                console.log('Query started');
+                                break;
+
+                            case 'intent':
+                                metrics.intentTime = event.time_ms;
+                                console.log(`Intent classified in ${event.time_ms}ms`);
+                                break;
+
+                            case 'documents':
+                                metrics.retrievalTime = event.time_ms;
+                                removeTypingIndicator();
+
+                                // Add empty assistant message to start streaming
+                                if (!responseStarted) {
+                                    const chatMessages = document.getElementById('chatMessages');
+                                    const messageDiv = document.createElement('div');
+                                    messageDiv.className = 'message assistant';
+                                    messageDiv.id = 'streamingMessage';
+                                    messageDiv.innerHTML = `<div class="message-bubble"></div>`;
+                                    chatMessages.appendChild(messageDiv);
+
+                                    responseStarted = true;
+                                }
+
+                                // Add documents preview after a short delay
+                                setTimeout(() => {
+                                    if (event.data && event.data.length > 0) {
+                                        addMessage(fullResponse, false, event.data);
+                                    }
+                                }, 500);
+                                break;
+
+                            case 'ttft':
+                                metrics.ttft = event.time_ms;
+                                updateMetrics(metrics);
+                                console.log(`TTFT: ${event.time_ms}ms`);
+                                break;
+
+                            case 'token':
+                                fullResponse += event.data;
+                                updateLastMessage(event.data);
+                                break;
+
+                            case 'complete':
+                                metrics.tokensPerSecond = event.tokens_per_second;
+                                updateMetrics(metrics);
+                                console.log('Query complete:', event);
+                                break;
+
+                            case 'error':
+                                removeTypingIndicator();
+                                addMessage(`错误: ${event.message}`, false);
+                                setStatus('error');
+                                console.error('Error:', event);
+                                break;
+                        }
+                    }
+                }
+
+            } catch (error) {
+                removeTypingIndicator();
+                addMessage(`网络错误: ${error.message}`, false);
+                setStatus('error');
+                console.error('Fetch error:', error);
+            }
+
+            isProcessing = false;
+            setStatus('idle');
+            document.getElementById('sendButton').disabled = false;
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+    </script>
+</body>
+</html>

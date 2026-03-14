@@ -1,0 +1,21 @@
+Query,Intent,Confidence,Status,Platform,Time (ms),Time
+Which department has the highest annual budget?,Finance,0.8,success,web,1566,2026-03-14 12:58:33
+Which department has the highest annual budget?,Finance,0.8,success,feishu,1522,2026-03-14 12:55:39
+Can I access my policy online?,General,0.8,success,feishu,1696,2026-03-14 12:55:23
+What are your office hours?,Finance,0.8,success,feishu,1433,2026-03-14 12:55:07
+When was the Privacy Policy last updated?,Legal,0.8,success,feishu,1539,2026-03-14 12:54:55
+What regulations must the company comply with?,Legal,0.8,success,feishu,1706,2026-03-14 12:54:37
+What health insurance benefits are included?,General,0.8,success,dingtalk,1957,2026-03-14 12:50:44
+How much travel & entertainment budget is allocated annually?,Finance,0.8,success,dingtalk,1663,2026-03-14 12:50:29
+What are your office hours?,Finance,0.8,success,dingtalk,1532,2026-03-14 12:50:19
+What types of life insurance do you offer?,General,0.8,success,dingtalk,1451,2026-03-14 12:50:08
+What types of life insurance do you offer?,General,0.8,success,dingtalk,1598,2026-03-14 12:49:32
+When was the Privacy Policy last updated?,Legal,0.8,success,telegram,1600,2026-03-14 12:37:53
+What regulations must the company comply with,Legal,0.8,success,telegram,2304,2026-03-14 12:37:35
+How many vacation days do I get per year?,HR,0.8,success,telegram,1383,2026-03-14 12:37:17
+What health insurance benefits are included?,General,0.8,success,telegram,1785,2026-03-14 12:36:10
+How much vacation do I accrue after 5 years,HR,0.8,success,web,1503,2026-03-14 12:29:00
+Can I use sick leave for medical appointments,HR,0.8,success,web,1390,2026-03-14 12:28:31
+What health insurance benefits are included,General,0.8,success,web,1540,2026-03-14 12:28:13
+What is your 24/7 claims hotline number,General,0.8,success,web,1387,2026-03-14 12:26:45
+What are your office hours?,Finance,0.8,success,web,1246,2026-03-14 12:25:58

@@ -1,0 +1,24 @@
+Query Summary Report
+Generated: 2026-03-14 20:59:03
+
+Total Queries: 20
+Successful Queries: 20
+Failed Queries: 0
+No Match Queries: 0
+
+By Platform:
+Platform
+web         6
+feishu      5
+dingtalk    5
+telegram    4
+
+By Intent Space:
+Intent
+General    7
+Finance    6
+Legal      4
+HR         3
+
+Average Response Time: 1590ms
+Average Confidence: 80.00%
